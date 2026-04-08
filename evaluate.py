@@ -1,18 +1,9 @@
-"""
-evaluate.py
------------
-Évalue ArcFace et FaceNet sur les paires LFW.
-Génère FAR, FRR, ROC et AUC comparatifs.
-
-Usage :
-    python evaluate.py
-"""
-
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import numpy as np
 import tensorflow as tf
+import argparse
 
 from dataset_loader import get_lfw_pairs_dataset
 from arcface_model import load_arcface_embedding, get_embedding as arcface_emb
@@ -21,6 +12,10 @@ from metrics import evaluate_model, plot_all_metrics
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Évaluation ArcFace vs FaceNet sur LFW')
+    parser.add_argument('--num_pairs', type=int, default=None, help='Nombre de paires à évaluer (défaut: toutes)')
+    args = parser.parse_args()
+
     print("\n" + "="*55)
     print("  ÉVALUATION — ArcFace vs FaceNet sur LFW")
     print("="*55)
@@ -40,6 +35,15 @@ def main():
         return
 
     print(f"  → {len(labels)} paires | {labels.sum()} genuine | {(labels==0).sum()} impostor")
+
+    # ── Réduction du nombre de paires si demandé ──
+    if args.num_pairs and args.num_pairs < len(labels):
+        print(f"\n🔄 Réduction à {args.num_pairs} paires...")
+        idx = np.random.choice(len(labels), args.num_pairs, replace=False)
+        faces1 = faces1[idx]
+        faces2 = faces2[idx]
+        labels = labels[idx]
+        print(f"  → {len(labels)} paires sélectionnées")
 
     # ── Chargement des modèles ──
     print("\n🔧 Chargement des modèles...")

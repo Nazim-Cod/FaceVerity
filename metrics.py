@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 # ─── Calcul des scores sur LFW ───────────────────────────────────────────────────
 
-def compute_lfw_scores(model, get_embedding_fn, faces1, faces2, labels, batch_size=64):
+def compute_lfw_scores(model, get_embedding_fn, faces1, faces2, labels, batch_size=32):
     """
     Calcule les scores de similarité cosinus sur toutes les paires LFW.
 
@@ -222,4 +222,5 @@ def plot_all_metrics(results_list, save_path='./evaluation/results_comparison.pn
     plt.savefig(save_path, dpi=150, bbox_inches='tight',
                 facecolor=fig.get_facecolor())
     print(f"\n[Métriques] Graphiques sauvegardés → {save_path}")
+    plt.show()
     plt.close()

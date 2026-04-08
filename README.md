@@ -1,121 +1,197 @@
 # 🎯 Reconnaissance Faciale — Vérification d'Identité (TensorFlow)
 
-Système de vérification d'identité comparant **ArcFace** et **FaceNet** implémentés avec **TensorFlow 2.13**.
+Ce projet implémente un système de vérification d'identité par reconnaissance faciale en comparant deux approches : **ArcFace** et **FaceNet**. Il repose sur **TensorFlow 2.13** et propose :
+
+- entraînement par fine-tuning sur le dataset **CelebA**
+- évaluation de modèle sur le dataset **LFW**
+- interface utilisateur avec **Streamlit**
 
 ---
 
-## ⚠️ Compatibilité Python / TensorFlow
+## 📌 Présentation
 
-| Python | TensorFlow max supporté | Statut |
-|--------|--------------------------|--------|
-| 3.8    | **2.13.1** ✅            | Fonctionne (ce projet) |
-| 3.9    | 2.13.1                   | ✅ OK |
-| **3.10** | 2.13 → 2.17            | ✅ **Recommandé** |
-| 3.11   | 2.13 → 2.17              | ✅ OK |
-| 3.12+  | 2.16+                    | ⚠️ Partiel |
+L'objectif est de comparer deux modèles de reconnaissance faciale sur une même base de données :
 
-> **Si tu as Python 3.8** : ce projet fonctionne directement avec `tensorflow==2.13.1`
-> **Sinon** : télécharge Python 3.10.11 sur https://www.python.org/downloads/release/python-31011/
+- **ArcFace** : ResNet-50 + loss angulaire
+- **FaceNet** : InceptionResNetV2 + triplet loss
+
+Le projet fournit des scripts pour :
+
+1. charger les datasets
+2. entraîner les modèles
+3. évaluer les performances
+4. tester en mode interactif
 
 ---
 
-## 📁 Structure du Projet
+## 📦 Structure du projet
 
 ```
-face_verify_tf/
-├── models/
-│   ├── arcface_model.py      # ArcFace avec ArcFace Loss (TF/Keras)
-│   └── facenet_model.py      # FaceNet InceptionResnetV1 (TF/Keras)
-├── data/
-│   └── dataset_loader.py     # Chargement CelebA + LFW
-├── evaluation/
-│   └── metrics.py            # FAR, FRR, ROC, AUC + graphiques
-├── gui/
-│   └── app.py                # Interface Streamlit
-├── utils/
-│   └── face_utils.py         # Détection MTCNN + alignement
-├── train.py                  # Script fine-tuning
-├── evaluate.py               # Script évaluation LFW
+.
+├── app.py                # Interface Streamlit
+├── arcface_model.py      # Modèle ArcFace + fine-tuning
+├── dataset_loader.py     # Chargement CelebA et LFW
+├── evaluate.py           # Évaluation automatique LFW
+├── facenet_model.py      # Modèle FaceNet + fine-tuning
+├── face_utils.py         # Détection/alignment MTCNN
+├── metrics.py            # Calcul FAR/FRR/ROC/AUC
+├── README.md
 ├── requirements.txt
-└── README.md
+├── train.py              # Script de fine-tuning
+└── face_verify_tf/       # Version structurée du même projet
 ```
 
 ---
 
-## 🛠️ Installation complète (étape par étape)
+## ✅ Prérequis
 
-### Étape 1 — Vérifier ta version Python
-```bash
-python --version
-# doit afficher Python 3.8.x ou 3.10.x
-```
+- Python 3.8 ou 3.10 recommandé
+- TensorFlow 2.13.1
+- `pip` à jour
+- Dataset **CelebA** téléchargé manuellement
+- Dataset **LFW** pour l'évaluation automatique
 
-### Étape 2 — Créer un environnement virtuel
+> Le projet fonctionne aussi sans GPU, mais l'entraînement est plus lent.
+
+---
+
+## 🛠️ Installation
+
+### 1. Créez l'environnement virtuel
+
 ```bash
 # Windows
 python -m venv venv
 venv\Scripts\activate
 
-# Linux / Mac
+# Linux / macOS
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Étape 3 — Mettre à jour pip
+### 2. Mettez pip à jour
+
 ```bash
 pip install --upgrade pip
 ```
 
-### Étape 4 — Installer les dépendances
+### 3. Installez les dépendances
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### Étape 5 — Vérifier TensorFlow
+### 4. Vérifiez l'installation
+
 ```bash
-python -c "import tensorflow as tf; print('TF version:', tf.__version__)"
-# Doit afficher : TF version: 2.13.1
+python -c "import tensorflow as tf; print('TensorFlow', tf.__version__)"
+python --version 
 ```
 
-### Étape 6 (optionnel) — Vérifier le GPU
-```bash
-python -c "import tensorflow as tf; print('GPUs:', tf.config.list_physical_devices('GPU'))"
-```
+---
+
+## 🗂️ Datasets
+
+### CelebA
+
+Ce dataset doit être téléchargé manuellement car il requiert une authentification Google Drive.
+
+- Télécharger `img_align_celeba.zip`
+- Télécharger `identity_CelebA.txt`
+- Extraire `img_align_celeba.zip` dans `./data/celeba/`
+- Placer `identity_CelebA.txt` dans `./data/celeba/`
+
+### LFW
+
+L'évaluation automatique nécessite le dataset LFW. Le script accepte :
+
+- `lfw-deepfunneled` extrait
+- `pairs.txt` ou `pairs.csv`
+
+Placez les fichiers dans `./data/lfw/`.
 
 ---
 
 ## 🚀 Utilisation
 
+### 1. Fine-tuning des modèles
+
 ```bash
-# 1. Télécharger les datasets et fine-tuner les modèles
 python train.py --model both --epochs 5
+```
 
-# 2. Évaluer sur LFW (FAR / FRR / ROC)
+Options :
+
+- `--model arcface`
+- `--model facenet`
+- `--model both`
+- `--epochs N`
+- `--batch_size N`
+- `--max_samples N`
+- `--celeba_dir ./data/celeba`
+
+### 2. Évaluation automatique LFW
+
+```bash
 python evaluate.py
+```
 
-# 3. Lancer l'interface graphique
-streamlit run gui/app.py
+### 3. Interface Streamlit
+
+```bash
+streamlit run app.py
 ```
 
 ---
 
-## 📊 Métriques évaluées
+## 📈 Résultats attendus
 
-| Métrique | Description |
-|----------|-------------|
-| **FAR** | False Acceptance Rate — un imposteur est accepté |
-| **FRR** | False Rejection Rate — une vraie personne est rejetée |
-| **ROC** | Courbe Receiver Operating Characteristic |
-| **AUC** | Aire sous la courbe ROC (1.0 = parfait) |
-| **EER** | Equal Error Rate (point où FAR = FRR) |
+- **Fine-tuning** des embeddings ArcFace et FaceNet
+- **Sauvegarde** des poids dans `./models/`
+- **Évaluation** des performances sur LFW
+- **Interface** pour tester des images ou une webcam
 
 ---
 
-## 🔧 Configuration matérielle requise
+## � Captures d'écran
 
-| Composant | Minimum | Recommandé |
-|-----------|---------|------------|
-| RAM | 4 GB | 8 GB |
-| Stockage | 5 GB | 10 GB |
-| GPU | Non requis | NVIDIA CUDA ≥ 3.5 |
-| OS | Windows 10 / Ubuntu 18+ / macOS 10.14+ | Ubuntu 20.04 |
+### Interface principale
+![Interface principale](screenshots/interface_principale.png)
+
+### Mode upload d'images
+![Upload d'images](screenshots/mode_upload.png)
+
+### Mode webcam temps réel
+![Webcam temps réel](screenshots /mode_webcam.png)
+
+### Résultats de comparaison
+![Résultats](screenshots/resultats.png)
+
+---
+
+## �📊 Métriques
+
+| Métrique | Description |
+|----------|-------------|
+| **FAR** | False Acceptance Rate — imposteur accepté incorrectement |
+| **FRR** | False Rejection Rate — sujet légitime rejeté incorrectement |
+| **ROC** | Receiver Operating Characteristic |
+| **AUC** | Aire sous la courbe ROC |
+| **EER** | Equal Error Rate — point où FAR = FRR |
+
+---
+
+## 💡 Bonnes pratiques
+
+- Utilisez `--max_samples` pendant le développement pour accélérer les tests
+- Confirmez que `./data/celeba/` contient `img_align_celeba/` et `identity_CelebA.txt`
+- Confirmez que `./data/lfw/` contient `lfw-deepfunneled/` et `pairs.csv` ou `pairs.txt`
+
+---
+
+## 📘 Remarques
+
+- Si LFW n'est pas disponible, le script `evaluate.py` s'arrête proprement et affiche les instructions de téléchargement.
+- Si CelebA n'est pas disponible, `train.py` indique à l'utilisateur de télécharger le dataset manuellement.
+
+---
